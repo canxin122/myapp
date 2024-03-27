@@ -31,7 +31,6 @@ jobs:
       - name: Podfile
         run: |
           cd ios
-          rm Podfile.lock
           flutter clean
           flutter pub get
           pod install
