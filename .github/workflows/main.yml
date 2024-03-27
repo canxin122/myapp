@@ -1,0 +1,45 @@
+name: CI
+on:
+  pull_request:
+    branches:
+      - 'dev'
+  merge_group:
+  workflow_dispatch:
+
+jobs:
+  ios-build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
+          
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'beta'
+          
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Podfile
+        run: |
+          cd ios
+          flutter clean
+          flutter pub get
+          pod install
+          pod update
+          cd ..
+          
+      - name: Build
+        run: |
+          flutter build ios --release --no-codesign
+          mkdir -p Payload
+          mv ./build/ios/iphoneos/Runner.app Payload
+          zip -r -y Payload.zip Payload/Runner.app
+          mv Payload.zip Payload.ipa
+          
+      - name: Upload IPA
+        uses: actions/upload-artifact@v2
+        with:
+          name: ipa-build
+          path: Payload.ipa
+
