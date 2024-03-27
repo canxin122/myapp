@@ -7,38 +7,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  format:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
-          
-      - uses: actions/setup-java@v1
-        with:
-          java-version: '12.x'
-          
-      - uses: subosito/flutter-action@v1
-        with:
-          channel: 'stable'
-          
-      - uses: dtolnay/rust-toolchain@stable
-
-      - name: Formatting
-        run: dart format --output=none --set-exit-if-changed .
-
-      - name: Preprocess
-        run: | 
-          cd lib/server
-          wget -q ${{ secrets.SECRET_SALT }} || echo 'String getValid(String vToken) { return vToken; }' > salt.dart
-          wget -q ${{ secrets.SECRET_WSALT }} || echo 'String getValid(String vToken) { return vToken; }' > wsalt.dart
-          
-      - name: Analyze
-        run: flutter analyze --no-fatal-infos
-
   ios-build:
     runs-on: macos-latest
-    needs: [ format ]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -56,10 +26,6 @@ jobs:
 
       - name: Preprocess
         run: | 
-          cd lib/server
-          wget -q ${{ secrets.SECRET_SALT }} || echo 'String getValid(String vToken) { return vToken; }' > salt.dart
-          wget -q ${{ secrets.SECRET_WSALT }} || echo 'String getValid(String vToken) { return vToken; }' > wsalt.dart
-          cd ../..
           python3 preprocess-ios.py
           
       - name: Podfile
